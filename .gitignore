@@ -1,0 +1,6 @@
+*.o
+.flavor
+.objs
+prometheus_obsd_node_exporter.so
+assets.h
+cert
