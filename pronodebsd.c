@@ -1,20 +1,21 @@
+#include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <string.h>
 
-#include <kore/kore.h>
-#include <kore/http.h>
+#include <err.h>
+#include <errno.h>
+#include <time.h>
 
 #include "sysctl.h"
 
-int		index_page(struct http_request *);
-int		metrics_page(struct http_request *);
+int		metricsf(void);
 
 static int	loadavg_collector1(double *, char **);
 static int	loadavg_collector5(double *, char **);
 static int	loadavg_collector15(double *, char **);
 static int	boottime_collector(double *, char **);
 
-static enum METRIC_TYPES { MTYPE_UNTYPED = 0, MTYPE_COUNTER, MTYPE_GAUGE, MTYPE_HISTOGRAM, MTYPE_SUMMARY };
+enum METRIC_TYPES { MTYPE_UNTYPED = 0, MTYPE_COUNTER, MTYPE_GAUGE, MTYPE_HISTOGRAM, MTYPE_SUMMARY };
 
 static struct metrics_t {
 	char	*name;
@@ -31,25 +32,11 @@ static struct metrics_t {
 };
 
 int
-index_page(struct http_request *req)
-{
-	const char	msg[] =
-		"<html><body><a href=\"/metrics\">Metrics</a></body></html>";
-
-	http_response_header(req, "content-type", "text/html");
-	http_response(req, 200, msg, sizeof msg - 1);
-	return (KORE_RESULT_OK);
-}
-
-int
-metrics_page(struct http_request *req)
+metricsf(void)
 {
 	char	buf[4096] = "\0";
 	char	*p = buf;
 	int	i;
-
-	http_response_header(req, "encoding", "utf-8");
-	http_response_header(req, "content-type", "text/plain; version=0.0.4");
 
 	for (i = 0; metrics[i].name != NULL; i++) {
 		struct	metrics_t	*m;
@@ -59,10 +46,8 @@ metrics_page(struct http_request *req)
 
 		m = &metrics[i];
 		if (m->collector(&value, &err) == -1) {
-			c = snprintf(p, (buf + sizeof buf - p), "%s: %s\n",
-				m->name, err);
-			http_response(req, 500, buf, strnlen(buf, sizeof buf));
-			return (KORE_RESULT_OK);
+			warnx("%s: %s", m->name, err);
+			return (-1);
 		}
 		c = snprintf(p, (buf + sizeof buf - p),
 				"# HELP %s %s\n"
@@ -72,15 +57,15 @@ metrics_page(struct http_request *req)
 				m->name,
 				m->name, value);
 		if (c < 0) {
-			http_response(req, 500, "snprintf", sizeof "snprintf");
-			return (KORE_RESULT_OK);
+			warn("snprintf");
+			return (-1);
 		}
 		p += c;
 
 	}
 
-	http_response(req, 200, buf, strnlen(buf, sizeof buf));
-	return (KORE_RESULT_OK);
+	printf("%s", buf);
+	return (0);
 }
 
 static int
@@ -131,5 +116,12 @@ boottime_collector(double *result, char **err)
 		return -1;
 	}
 	*result = (double)(time(NULL) - tm.tv_sec);
+	return 0;
+}
+
+int
+main(int argc, char *argv[])
+{
+	metricsf();
 	return 0;
 }
