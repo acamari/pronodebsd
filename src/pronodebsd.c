@@ -4,6 +4,8 @@
 #include <kore/kore.h>
 #include <kore/http.h>
 
+#include "sysctl.h"
+
 int		index_page(struct http_request *);
 int		metrics_page(struct http_request *);
 
@@ -24,6 +26,7 @@ static struct metrics_t {
 	{ "node_load5", "5m load average", MTYPE_GAUGE, loadavg_collector5 },
 	{ "node_load15", "15m load average", MTYPE_GAUGE, loadavg_collector15 },
 	{ "node_boot_time_seconds", "Node boot time, in unixtime.", MTYPE_GAUGE, boottime_collector },
+	{ "node_forks_total", "Total number of forks.", MTYPE_GAUGE, forks_collector },
 	{ NULL, NULL, 0, NULL }
 };
 
@@ -56,7 +59,9 @@ metrics_page(struct http_request *req)
 
 		m = &metrics[i];
 		if (m->collector(&value, &err) == -1) {
-			http_response(req, 500, m->name, strlen(m->name));
+			c = snprintf(p, (buf + sizeof buf - p), "%s: %s\n",
+				m->name, err);
+			http_response(req, 500, buf, strnlen(buf, sizeof buf));
 			return (KORE_RESULT_OK);
 		}
 		c = snprintf(p, (buf + sizeof buf - p),
