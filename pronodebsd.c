@@ -21,15 +21,19 @@ static struct metrics_t {
 	char	*name;
 	char	*help;
 	enum METRIC_TYPES	type;
-	int	(*collector)(double *, char **);
+	int	isvector;
+	union {
+		int	(*scalar)(double *, char **);
+		int	(*vector)(double **, char **);
+	} collector;
 } metrics[] = {
-	{ "node_load1", "1m load average", MTYPE_GAUGE, loadavg_collector1 },
-	{ "node_load5", "5m load average", MTYPE_GAUGE, loadavg_collector5 },
-	{ "node_load15", "15m load average", MTYPE_GAUGE, loadavg_collector15 },
-	{ "node_boot_time_seconds", "Node boot time, in unixtime.", MTYPE_GAUGE, boottime_collector },
-	{ "node_forks_total", "Total number of forks.", MTYPE_GAUGE, forks_collector },
-	{ "node_intr_total", "Total number of interrupts serviced.", MTYPE_GAUGE, intr_collector },
-	{ NULL, NULL, 0, NULL }
+	{ "node_load1", "1m load average", MTYPE_GAUGE, 0, loadavg_collector1 },
+	{ "node_load5", "5m load average", MTYPE_GAUGE, 0, loadavg_collector5 },
+	{ "node_load15", "15m load average", MTYPE_GAUGE, 0, loadavg_collector15 },
+	{ "node_boot_time_seconds", "Node boot time, in unixtime.", MTYPE_GAUGE, 0, boottime_collector },
+	{ "node_forks_total", "Total number of forks.", MTYPE_GAUGE, 0, forks_collector },
+	{ "node_intr_total", "Total number of interrupts serviced.", MTYPE_GAUGE, 0, intr_collector },
+	{ NULL, NULL, 0, 0, NULL }
 };
 
 int
@@ -46,7 +50,8 @@ metricsf(void)
 		char	*err;
 
 		m = &metrics[i];
-		if (m->collector(&value, &err) == -1) {
+		if (m->isvector) {
+		} else if (m->collector.scalar(&value, &err) == -1) {
 			warnx("%s: %s", m->name, err);
 			return (-1);
 		}
