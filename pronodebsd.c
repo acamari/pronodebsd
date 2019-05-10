@@ -28,6 +28,7 @@ static struct metrics_t {
 	{ "node_load15", "15m load average", MTYPE_GAUGE, loadavg_collector15 },
 	{ "node_boot_time_seconds", "Node boot time, in unixtime.", MTYPE_GAUGE, boottime_collector },
 	{ "node_forks_total", "Total number of forks.", MTYPE_GAUGE, forks_collector },
+	{ "node_intr_total", "Total number of interrupts serviced.", MTYPE_GAUGE, intr_collector },
 	{ NULL, NULL, 0, NULL }
 };
 
