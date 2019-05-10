@@ -13,10 +13,10 @@ int
 forks_collector(double *result, char **err)
 {
 	struct forkstat	fs;
-	size_t	fssz = sizeof fs;
+	size_t	sz = sizeof fs;
 	int	mib[] = { CTL_KERN, KERN_FORKSTAT };
 
-	if (sysctl(mib, sizeof mib / sizeof mib[0], &fs, &fssz, NULL, 0) == -1) {
+	if (sysctl(mib, sizeof mib / sizeof mib[0], &fs, &sz, NULL, 0) == -1) {
 		*err = strerror(errno);
 		return -1;
 	}
