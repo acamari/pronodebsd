@@ -9,21 +9,6 @@
 
 #include "sysctl.h"
 
-int
-forks_collector(double *result, char **err)
-{
-	struct forkstat	fs;
-	size_t	sz = sizeof fs;
-	int	mib[] = { CTL_KERN, KERN_FORKSTAT };
-
-	if (sysctl(mib, sizeof mib / sizeof mib[0], &fs, &sz, NULL, 0) == -1) {
-		*err = strerror(errno);
-		return -1;
-	}
-
-	*result = fs.cntfork;
-	return 0;
-}
 
 static int
 uvmexp_collector(struct uvmexp *uvmexp, char **err)
@@ -35,6 +20,19 @@ uvmexp_collector(struct uvmexp *uvmexp, char **err)
 		*err = strerror(errno);
 		return -1;
 	}
+	return 0;
+}
+
+int
+forks_collector(double *result, char **err)
+{
+	struct uvmexp	uvmexp;
+
+	if (uvmexp_collector(&uvmexp, err) == -1) {
+		return -1;
+	}
+
+	*result = uvmexp.forks;
 	return 0;
 }
 
