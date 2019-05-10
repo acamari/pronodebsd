@@ -2,5 +2,5 @@
 .flavor
 .objs
 *.so
-assets.h
-cert
+pronodebsd
+obj/
