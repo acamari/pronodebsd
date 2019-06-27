@@ -253,8 +253,6 @@ uname_collector(struct mresult *mres, int nelem, char **err, int *newnelem)
 int
 main(int argc, char *argv[])
 {
-	for (;;) {
-		procmetrics();
-	}
+	procmetrics();
 	return 0;
 }
