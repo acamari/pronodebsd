@@ -4,3 +4,4 @@
 *.so
 pronodebsd
 obj/
+*.d/
