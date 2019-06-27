@@ -138,17 +138,12 @@ procmetrics(void)
 
 		}
 
-		{
-			int	c; /* char count */
-
-			c = printf(	"# HELP %s %s\n"
-					"# TYPE %s counter\n",
-					m->name, m->help,
-					m->name);
-			if (c < 0) {
-				warn("printf");
-				return;
-			}
+		if (printf(	"# HELP %s %s\n"
+				"# TYPE %s counter\n",
+				m->name, m->help,
+				m->name) < 0) {
+			warn("printf");
+			return;
 		}
 
 		for (int i = 0; i < m->nelem; i++) {
