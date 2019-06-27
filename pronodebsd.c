@@ -99,7 +99,9 @@ procmetrics(void)
 			if (newnelem > m->nelem) {
 				struct mresult *tmp;
 
+				/*
 				warnx("realloc, %p", m->mres);
+				*/
 				tmp = recallocarray(m->mres, m->nelem,
 						newnelem,
 						sizeof(*m->mres));
@@ -108,8 +110,10 @@ procmetrics(void)
 				}
 				m->mres = tmp;
 				m->nelem = newnelem;
+				/*
 				warnx("realloced, %p, %zd", m->mres,
 						sizeof(*m->mres) * m->nelem);
+				*/
 				continue;
 			}
 
