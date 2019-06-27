@@ -218,36 +218,49 @@ boottime_collector(double *result, char **err)
 	return 0;
 }
 
+#include <sys/utsname.h>
 static int
 uname_collector(struct mresult *mres, int nelem, char **err, int *newnelem)
 {
-	char	lbl[] = "domainname=\"(none)\"";
-	char	lbl2[] = "domai__ome=\"(nane)\"";
-	size_t sz = sizeof(lbl);
+	struct utsname	un;
+	char buf[1024] = "";
+	const int maxelem = 1; /* max number of el this func will ever return */
+	int c;
 
-	*newnelem = 2;
-	if (nelem < 2) {
+	*newnelem = maxelem;
+	if (nelem < maxelem) {
 		return 0;
 	}
 
-	if (mres[0].labelsz < sz) { /* not enough space */
-		mres[0].nlabelsz = sz;
-		return 0;
+	if (uname(&un) == -1) {
+		*err = strerror(errno);
+		return -1;
 	}
-	if (mres[1].labelsz < sz) { /* not enough space */
-		mres[1].nlabelsz = sz;
+
+	c = snprintf(buf, sizeof buf,
+			"domainname=\"(none)\","
+			"machine=\"%s\","
+			"nodename=\"%s\","
+			"release=\"%s\","
+			"version=\"%s\"",
+			un.machine,
+			un.nodename,
+			un.release,
+			un.version);
+	if (c < 0) {
+		*err = "snprintf";
+		return -1;
+	}
+
+	mres->nlabelsz = c + 1; /* add \0 */
+	if (mres->labelsz < mres->nlabelsz) { /* not enough space */
 		return 0;
 	}
 
-	mres[0].labelsz = sz;
-	mres[0].nlabelsz = sz;
-	mres[0].value = 1;
-	strlcpy(mres[0].label, lbl, mres[0].labelsz);
-	mres[1].labelsz = sz;
-	mres[1].nlabelsz = sz;
-	mres[1].value = 2;
-	strlcpy(mres[1].label, lbl2, mres[1].labelsz);
-	return 0;
+	mres->labelsz = mres->nlabelsz;
+	mres->value = 1;
+	strlcpy(mres->label, buf, mres->labelsz);
+	return 1;
 }
 
 int
